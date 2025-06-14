@@ -1,19 +1,26 @@
-
 import YooptaEditor, { createYooptaEditor } from "@yoopta/editor";
 import { html } from "@yoopta/exports";
-import {  MARKS, plugins, TOOLS } from "./consts";
-import React, { useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from "react";
+import { MARKS, plugins, TOOLS } from "./consts";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+import { useState } from "react";
 
-const Editor =forwardRef(({ readOnly, htmlData }, ref) => {
+const Editor = forwardRef(({ readonly, htmlData }, ref) => {
   const editor = useMemo(() => createYooptaEditor(), []);
   const selectionRef = useRef(null);
-
+  
+  const [isReadonly, setIsReadonly] = useState(readonly)
   useEffect(() => {
     if (htmlData) {
       deserializeHTML(htmlData);
     }
-  }, [htmlData]);
-
+    setIsReadonly(readonly);
+  }, [htmlData,readonly]);
 
   // from html to @yoopta content
   const deserializeHTML = (data) => {
@@ -29,22 +36,25 @@ const Editor =forwardRef(({ readOnly, htmlData }, ref) => {
   };
 
   useImperativeHandle(ref, () => ({
+    setReadonly: (val) => setIsReadonly(val),
+    getReadonly: () => isReadonly,
     getHTML: () => serializeHTML(),
+    deserializeHTML: (html) => deserializeHTML(html), // <- this makes it callable from parent
   }));
 
   return (
-      <div className="md:px-[20px] max-w-none" ref={selectionRef}>
-        <YooptaEditor
-          readOnly={readOnly}
-          editor={editor}
-          plugins={plugins}
-          tools={TOOLS}
-          marks={MARKS}
-          selectionBoxRoot={selectionRef}
-        />
-      </div>
-      
+    <div className="md:px-[20px] max-w-none" ref={selectionRef}>
+      <YooptaEditor
+        style={{ width: "100%" }}
+        readOnly={isReadonly}
+        editor={editor}
+        plugins={plugins}
+        tools={TOOLS}
+        marks={MARKS}
+        selectionBoxRoot={selectionRef}
+      />
+    </div>
   );
-})
+});
 
 export default Editor;
